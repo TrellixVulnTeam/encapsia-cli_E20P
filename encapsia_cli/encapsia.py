@@ -85,8 +85,13 @@ def get_user_config():
     "--host",
     help="Name to use to lookup credentials in .encapsia/credentials.toml",
 )
+@click.option(
+    "--masquerade/--no-masquerade",
+    default=False,
+    help="Set Host header to act as masquerade_host if present in credentials store."
+)
 @click.pass_context
-def main(ctx, colour, host):
+def main(ctx, colour, host, masquerade):
     """CLI to talk to an encapsia host.
 
     Options can be provided in one of three ways, in this priority order:
@@ -115,7 +120,7 @@ def main(ctx, colour, host):
 
     """
     ctx.color = {"always": True, "never": False, "auto": None}[colour]
-    ctx.obj = dict(host=host)
+    ctx.obj = dict(host=host, masquerade=masquerade)
 
 
 COMMANDS = [

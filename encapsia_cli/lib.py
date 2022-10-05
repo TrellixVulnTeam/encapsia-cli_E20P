@@ -39,7 +39,7 @@ def _get_shell_setenv_template(shell):
 
 
 def log(message="", nl=True):
-    click.secho(message, fg="yellow", nl=nl)
+    click.secho(message, fg="yellow", nl=nl, err=True)
 
 
 def log_output(message=""):
@@ -79,16 +79,31 @@ def print_token(token, display, url=None, shell="auto"):
 
 def get_api(**obj):
     host = obj.get("host")
-    try:
-        url, token = encapsia_api.discover_credentials(host)
-    except encapsia_api.EncapsiaApiError as e:
-        log_error("Unable to determine host (or URL/token).")
-        log_error(
-            "Try specifying via the command line, env variable, "
-            "or ~/.encapsia/config.toml file."
-        )
-        log_error(str(e), abort=True)
-    return encapsia_api.EncapsiaApi(url, token)
+    masquerade = obj.get("masquerade", False)
+    if masquerade:
+        # cannot discover from environment
+        if not host:
+            log_error("Must specify the host with masquerading.", abort=True)
+        store = encapsia_api.CredentialsStore()
+        try:
+            entry = store.get_full(host)
+        except encapsia_api.EncapsiaApiError as e:
+            log_error(f"Could not get credentials entry for {host} from store:")
+            log_error(str(e), abort=True)
+        api = encapsia_api.MasqueradableEncapsiaApi(entry["url"], entry["token"])
+        api.masquerade_as(masqueraded_host=entry.get("masquerade_host"))
+    else:
+        try:
+            url, token = encapsia_api.discover_credentials(host)
+        except encapsia_api.EncapsiaApiError as e:
+            log_error("Unable to determine host (or URL/token).")
+            log_error(
+                "Try specifying via the command line, env variable, "
+                "or ~/.encapsia/config.toml file."
+            )
+            log_error(str(e), abort=True)
+        api = encapsia_api.EncapsiaApi(url, token)
+    return api
 
 
 def add_docstring(value):

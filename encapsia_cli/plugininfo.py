@@ -236,8 +236,8 @@ class PluginInfos:
             return None  # Never reached, but keep linters happy
 
     @staticmethod
-    def make_from_encapsia(host: str) -> PluginInfos:
-        api = lib.get_api(host=host)
+    def make_from_encapsia(**obj) -> PluginInfos:
+        api = lib.get_api(**obj)
         raw_info = api.run_view(
             "pluginsmanager",
             "plugins",

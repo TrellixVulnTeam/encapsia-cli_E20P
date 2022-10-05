@@ -192,7 +192,7 @@ def main(ctx, force, s3_buckets, local_dir):
 def freeze(obj):
     """Print currently installed plugins as versions TOML."""
     versions = PluginSpecs.make_from_plugininfos(
-        PluginInfos.make_from_encapsia(obj["host"])
+        PluginInfos.make_from_encapsia(**obj)
     ).as_version_dict()
     lib.log_output(toml.dumps(versions))
 
@@ -252,7 +252,7 @@ def status(obj, long_format, plugins):
     local_versions = PluginInfos.make_from_local_store(
         plugins_local_dir
     ).filter_to_latest()
-    plugin_infos = PluginInfos.make_from_encapsia(host)
+    plugin_infos = PluginInfos.make_from_encapsia(**obj)
     if plugins:
         specs = PluginSpecs.make_from_spec_strings(plugins)
         plugin_infos = specs.filter(plugin_infos)
@@ -310,7 +310,6 @@ def install(obj, versions, show_logs, latest_existing, all_available, plugins):
     plugins_local_dir = obj["plugins_local_dir"]
     plugins_force = obj["plugins_force"]
     plugins_s3_buckets = obj["plugins_s3_buckets"]
-    host = obj["host"]
 
     # Create a list of installation candidates.
     to_install_candidates = []
@@ -342,7 +341,7 @@ def install(obj, versions, show_logs, latest_existing, all_available, plugins):
     if latest_existing:
         to_install_candidates.extend(
             PluginSpec(pi.name, pi.variant)
-            for pi in PluginInfos.make_from_encapsia(host)
+            for pi in PluginInfos.make_from_encapsia(**obj)
         )
 
     # Get the plugins from S3
@@ -356,7 +355,7 @@ def install(obj, versions, show_logs, latest_existing, all_available, plugins):
 
     # Work out and list installation plan.
     # to_install_candidates = sorted(PluginInfos(to_install_candidates))
-    installed = PluginInfos.make_from_encapsia(host)
+    installed = PluginInfos.make_from_encapsia(**obj)
     local_store = PluginInfos.make_from_local_store(plugins_local_dir)
     plan = _create_install_plan(
         to_install_candidates, installed, local_store, force_install=plugins_force
@@ -649,7 +648,6 @@ def add(obj, versions, latest_existing, all_available, plugins):
     plugins_local_dir = obj["plugins_local_dir"]
     plugins_s3_buckets = obj["plugins_s3_buckets"]
     plugins_force = obj["plugins_force"]
-    host = obj["host"]
 
     specs_to_search_in_s3 = []
     to_download_from_s3 = []
@@ -686,7 +684,7 @@ def add(obj, versions, latest_existing, all_available, plugins):
         )
     if latest_existing:
         specs_to_search_in_s3.extend(
-            PluginSpecs.make_from_plugininfos(PluginInfos.make_from_encapsia(host))
+            PluginSpecs.make_from_plugininfos(PluginInfos.make_from_encapsia(**obj))
         )
     if specs_to_search_in_s3:
         s3_versions = PluginInfos.make_from_s3_buckets(plugins_s3_buckets)
